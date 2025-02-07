@@ -22,6 +22,7 @@ int GEAR_SHIFT_DURATION = 100;   // Dauer in ms
 int RPM_MAX = 8000;              // Maximale Drehzahl
 int RPM_MIN = 0;                 // Minimale Drehzahl
 float AMPLITUDE_FACTOR = 0.01;   // Faktor zur Anpassung der Amplitude
+int FREQUENZ_DIVISOR = 75;       // Divisor für die Frequenzberechnung
 
 // Globale Variablen
 GT7_UDP_Parser gt7Telem;
@@ -107,7 +108,7 @@ void processTelemetryData(Packet packetContent) {
   // Serial.println("%");
 
   // Frequenz basierend auf der Motordrehzahl berechnen
-  int frequency = rpm / 60; // f = RPM / 60
+  int frequency = rpm / FREQUENZ_DIVISOR; // f = RPM / 60
 
   // Gangwechsel überprüfen
   uint8_t currentGear = packetContent.packetContent.gears & 0b00001111;
@@ -124,7 +125,7 @@ void processTelemetryData(Packet packetContent) {
 
 void generateAudioSignalFromRPM(float rpm) {
   // Frequenz auf einen sinnvollen Bereich begrenzen (10 Hz bis 100 Hz)
-  int frequency = constrain(rpm / 75, 20, 90);
+  int frequency = constrain(rpm / FREQUENZ_DIVISOR, 20, 90);
   sineWave.setFrequency(frequency);
   //Serial.print('setfreq: ');
   Serial.print(frequency);
