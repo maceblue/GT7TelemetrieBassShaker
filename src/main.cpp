@@ -23,6 +23,7 @@ int RPM_MAX = 8000;              // Maximale Drehzahl
 int RPM_MIN = 0;                 // Minimale Drehzahl
 float AMPLITUDE_FACTOR = 0.01;   // Faktor zur Anpassung der Amplitude
 int FREQUENZ_DIVISOR = 75;       // Divisor für die Frequenzberechnung
+float TIRE_SLIP_FACTOR = 70.0;   // Faktor zur Anpassung der Frequenz basierend auf Reifenschlupf
 
 // Globale Variablen
 GT7_UDP_Parser gt7Telem;
@@ -44,6 +45,7 @@ StreamCopy copier(out, sound);
 void processTelemetryData(Packet packetContent);
 void generateAudioSignalFromRPM(float rpm);
 void generateGearChangeVibration();
+void generateTireSlipVibration(float tireSlip);
 void printTelemetry(float speed, float rpm, int intensity);
 void handleRoot();
 void handleUpdate();
@@ -97,15 +99,9 @@ void processTelemetryData(Packet packetContent) {
   float tireSlip2 = gt7Telem.getTyreSlipRatio(1);
   float tireSlip3 = gt7Telem.getTyreSlipRatio(2);
   float tireSlip4 = gt7Telem.getTyreSlipRatio(3);
-  // Serial.print("tireSlip1: ");
-  // Serial.print(tireSlip1);
-  // Serial.print(" tireSlip2: ");
-  // Serial.print(tireSlip2);
-  // Serial.print(" tireSlip3: ");
-  // Serial.print(tireSlip3);
-  // Serial.print(" tireSlip4: ");
-  // Serial.print(tireSlip4);
-  // Serial.println("%");
+
+  // Gesamtschlupf basierend auf der Abweichung von 1 berechnen
+  float totalTireSlip = abs(tireSlip1 - 1) + abs(tireSlip2 - 1) + abs(tireSlip3 - 1) + abs(tireSlip4 - 1);
 
   // Frequenz basierend auf der Motordrehzahl berechnen
   int frequency = rpm / FREQUENZ_DIVISOR; // f = RPM / 60
@@ -120,6 +116,7 @@ void processTelemetryData(Packet packetContent) {
   // Frequenz und Amplitude für den Bass Shaker setzen
   if (speed > 0) {
     generateAudioSignalFromRPM(rpm);
+    generateTireSlipVibration(totalTireSlip);
   }
 }
 
@@ -127,17 +124,16 @@ void generateAudioSignalFromRPM(float rpm) {
   // Frequenz auf einen sinnvollen Bereich begrenzen (10 Hz bis 100 Hz)
   int frequency = constrain(rpm / FREQUENZ_DIVISOR, 20, 90);
   sineWave.setFrequency(frequency);
-  //Serial.print('setfreq: ');
   Serial.print(frequency);
-  Serial.println("Hz");
+  Serial.println(" Hz");
+}
 
-
-  // Amplitude basierend auf der RPM berechnen
-  float amplitude = constrain(rpm * AMPLITUDE_FACTOR, 0.0, 1.0);
-  // sineWave.setAmplitude(amplitude);
-  // Serial.print('set amplitude:');
-  // Serial.print(amplitude);
-  // Serial.println(' ');
+void generateTireSlipVibration(float tireSlip) {
+  // Frequenz basierend auf dem Reifenschlupf berechnen
+  int frequency = constrain(20 + tireSlip * TIRE_SLIP_FACTOR, 20, 90);
+  sineWave.setFrequency(frequency);
+  Serial.print("Tire Slip Frequency: ");
+  Serial.println(frequency);
 }
 
 void generateGearChangeVibration() {
@@ -198,6 +194,11 @@ void handleRoot() {
   html += GEAR_SHIFT_DURATION;
   html += R"=====(">
 
+    <label for="tire_slip_factor">Reifenschlupf-Faktor:</label>
+    <input type="number" step="0.01" id="tire_slip_factor" name="tire_slip_factor" value=")=====";
+  html += TIRE_SLIP_FACTOR;
+  html += R"=====(">
+
     <button type="submit">Aktualisieren</button>
   </form>
 </body>
@@ -213,6 +214,7 @@ void handleUpdate() {
   if (server.hasArg("gear_shift_freq")) GEAR_SHIFT_FREQUENCY = server.arg("gear_shift_freq").toInt();
   if (server.hasArg("normal_freq")) NORMAL_FREQUENCY = server.arg("normal_freq").toInt();
   if (server.hasArg("gear_shift_dur")) GEAR_SHIFT_DURATION = server.arg("gear_shift_dur").toInt();
+  if (server.hasArg("tire_slip_factor")) TIRE_SLIP_FACTOR = server.arg("tire_slip_factor").toFloat();
 
   server.sendHeader("Location", "/");
   server.send(303);
