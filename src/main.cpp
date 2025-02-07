@@ -197,6 +197,7 @@ void handleRoot() {
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Vibrationseinstellungen</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background-color: black; color: white; }
