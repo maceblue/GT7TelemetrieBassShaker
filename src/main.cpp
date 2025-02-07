@@ -25,6 +25,10 @@ float AMPLITUDE_FACTOR = 0.01;   // Faktor zur Anpassung der Amplitude
 int FREQUENZ_DIVISOR = 75;       // Divisor für die Frequenzberechnung
 float TIRE_SLIP_FACTOR = 70.0;   // Faktor zur Anpassung der Frequenz basierend auf Reifenschlupf
 
+// Variablen zur Steuerung der Vibrationsmethoden
+bool useTireSlip = true;  // Vibration basierend auf Reifenschlupf aktivieren
+bool useRPM = true;        // Vibration basierend auf RPM aktivieren
+
 // Globale Variablen
 GT7_UDP_Parser gt7Telem;
 Packet packetContent;
@@ -43,9 +47,9 @@ StreamCopy copier(out, sound);
 
 // Funktionsdeklarationen
 void processTelemetryData(Packet packetContent);
-void generateAudioSignalFromRPM(float rpm);
+int generateAudioSignalFromRPM(float rpm);
+int generateTireSlipVibration(float tireSlip);
 void generateGearChangeVibration();
-void generateTireSlipVibration(float tireSlip);
 void printTelemetry(float speed, float rpm, int intensity);
 void handleRoot();
 void handleUpdate();
@@ -103,9 +107,6 @@ void processTelemetryData(Packet packetContent) {
   // Gesamtschlupf basierend auf der Abweichung von 1 berechnen
   float totalTireSlip = abs(tireSlip1 - 1) + abs(tireSlip2 - 1) + abs(tireSlip3 - 1) + abs(tireSlip4 - 1);
 
-  // Frequenz basierend auf der Motordrehzahl berechnen
-  int frequency = rpm / FREQUENZ_DIVISOR; // f = RPM / 60
-
   // Gangwechsel überprüfen
   uint8_t currentGear = packetContent.packetContent.gears & 0b00001111;
   if (currentGear != previousGear) {
@@ -115,25 +116,40 @@ void processTelemetryData(Packet packetContent) {
 
   // Frequenz und Amplitude für den Bass Shaker setzen
   if (speed > 0) {
-    generateAudioSignalFromRPM(rpm);
-    generateTireSlipVibration(totalTireSlip);
+    int frequency = NORMAL_FREQUENCY;
+
+    if (useRPM) {
+      frequency = generateAudioSignalFromRPM(rpm);
+    }
+
+    if (useTireSlip) {
+      int tireSlipFrequency = generateTireSlipVibration(totalTireSlip);
+      if (useRPM) {
+        // Durchschnitt der beiden Frequenzen berechnen
+        frequency = (frequency + tireSlipFrequency) / 2;
+      } else {
+        frequency = tireSlipFrequency;
+      }
+    }
+
+    sineWave.setFrequency(frequency);
   }
 }
 
-void generateAudioSignalFromRPM(float rpm) {
+int generateAudioSignalFromRPM(float rpm) {
   // Frequenz auf einen sinnvollen Bereich begrenzen (10 Hz bis 100 Hz)
   int frequency = constrain(rpm / FREQUENZ_DIVISOR, 20, 90);
-  sineWave.setFrequency(frequency);
-  Serial.print(frequency);
-  Serial.println(" Hz");
+  Serial.print("RPM Frequency: ");
+  Serial.println(frequency);
+  return frequency;
 }
 
-void generateTireSlipVibration(float tireSlip) {
+int generateTireSlipVibration(float tireSlip) {
   // Frequenz basierend auf dem Reifenschlupf berechnen
   int frequency = constrain(20 + tireSlip * TIRE_SLIP_FACTOR, 20, 90);
-  sineWave.setFrequency(frequency);
   Serial.print("Tire Slip Frequency: ");
   Serial.println(frequency);
+  return frequency;
 }
 
 void generateGearChangeVibration() {
@@ -199,6 +215,26 @@ void handleRoot() {
   html += TIRE_SLIP_FACTOR;
   html += R"=====(">
 
+    <label for="use_tire_slip">Reifenschlupf verwenden:</label>
+    <select id="use_tire_slip" name="use_tire_slip">
+      <option value="1" )=====";
+  html += useTireSlip ? "selected" : "";
+  html += R"=====(>Ja</option>
+      <option value="0" )=====";
+  html += !useTireSlip ? "selected" : "";
+  html += R"=====(>Nein</option>
+    </select>
+
+    <label for="use_rpm">RPM verwenden:</label>
+    <select id="use_rpm" name="use_rpm">
+      <option value="1" )=====";
+  html += useRPM ? "selected" : "";
+  html += R"=====(>Ja</option>
+      <option value="0" )=====";
+  html += !useRPM ? "selected" : "";
+  html += R"=====(>Nein</option>
+    </select>
+
     <button type="submit">Aktualisieren</button>
   </form>
 </body>
@@ -215,6 +251,8 @@ void handleUpdate() {
   if (server.hasArg("normal_freq")) NORMAL_FREQUENCY = server.arg("normal_freq").toInt();
   if (server.hasArg("gear_shift_dur")) GEAR_SHIFT_DURATION = server.arg("gear_shift_dur").toInt();
   if (server.hasArg("tire_slip_factor")) TIRE_SLIP_FACTOR = server.arg("tire_slip_factor").toFloat();
+  if (server.hasArg("use_tire_slip")) useTireSlip = server.arg("use_tire_slip").toInt() == 1;
+  if (server.hasArg("use_rpm")) useRPM = server.arg("use_rpm").toInt() == 1;
 
   server.sendHeader("Location", "/");
   server.send(303);
