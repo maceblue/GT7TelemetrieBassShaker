@@ -103,8 +103,9 @@ void processTelemetryData(Packet packetContent) {
   }
 
   // Frequenz und Amplitude für den Bass Shaker setzen
-  generateAudioSignalFromRPM(rpm);
-  
+  if (speed > 0) {
+    generateAudioSignalFromRPM(rpm);
+  }
 }
 
 void generateAudioSignalFromRPM(float rpm) {
