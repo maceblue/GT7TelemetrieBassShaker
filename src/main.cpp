@@ -45,6 +45,12 @@ GeneratedSoundStream<int16_t> sound(sineWave);
 AudioBoardStream out(AudioKitEs8388V1);
 StreamCopy copier(out, sound);
 
+// Variablen zur Überwachung von Änderungen
+unsigned long lastChangeTime = 0;
+float lastRPM = 0;
+float lastTireSlip = 0;
+const unsigned long STOP_VIBRATION_DELAY = 5000; // 5 Sekunden
+
 // Funktionsdeklarationen
 void processTelemetryData(Packet packetContent);
 int generateAudioSignalFromRPM(float rpm);
@@ -120,10 +126,18 @@ void processTelemetryData(Packet packetContent) {
 
     if (useRPM) {
       frequency = generateAudioSignalFromRPM(rpm);
+      if (rpm != lastRPM) {
+        lastRPM = rpm;
+        lastChangeTime = millis(); // Änderung erkannt, Timer zurücksetzen
+      }
     }
 
     if (useTireSlip) {
       int tireSlipFrequency = generateTireSlipVibration(totalTireSlip);
+      if (totalTireSlip != lastTireSlip) {
+        lastTireSlip = totalTireSlip;
+        lastChangeTime = millis(); // Änderung erkannt, Timer zurücksetzen
+      }
       if (useRPM) {
         // Durchschnitt der beiden Frequenzen berechnen
         frequency = (frequency + tireSlipFrequency) / 2;
@@ -132,7 +146,12 @@ void processTelemetryData(Packet packetContent) {
       }
     }
 
-    sineWave.setFrequency(frequency);
+    // Vibration stoppen, wenn sich die Werte nicht ändern
+    if (millis() - lastChangeTime > STOP_VIBRATION_DELAY) {
+      sineWave.setFrequency(0); // Vibration stoppen
+    } else {
+      sineWave.setFrequency(frequency);
+    }
   }
 }
 
