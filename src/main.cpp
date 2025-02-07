@@ -18,7 +18,7 @@ int BASE_FREQUENCY = 20;         // Basis-Frequenz in Hz
 int FREQUENCY_PER_INTENSITY = 1; // Hz pro Intensitätspunkt
 int GEAR_SHIFT_FREQUENCY = 30;   // Frequenz für Gangwechsel
 int NORMAL_FREQUENCY = 20;       // Normale Frequenz nach Gangwechsel
-int GEAR_SHIFT_DURATION = 150;   // Dauer in ms
+int GEAR_SHIFT_DURATION = 100;   // Dauer in ms
 int RPM_MAX = 8000;              // Maximale Drehzahl
 int RPM_MIN = 0;                 // Minimale Drehzahl
 float AMPLITUDE_FACTOR = 0.01;   // Faktor zur Anpassung der Amplitude
@@ -41,7 +41,7 @@ StreamCopy copier(out, sound);
 
 // Funktionsdeklarationen
 void processTelemetryData(Packet packetContent);
-void generateAudioSignalSimple(int intensity);
+void generateAudioSignalFromRPM(float rpm);
 void generateGearChangeVibration();
 void printTelemetry(float speed, float rpm, int intensity);
 void handleRoot();
@@ -92,6 +92,20 @@ void processTelemetryData(Packet packetContent) {
   float speed = packetContent.packetContent.speed * 3.6;
   float rpm = packetContent.packetContent.EngineRPM;
 
+  float tireSlip1 = gt7Telem.getTyreSlipRatio(0);
+  float tireSlip2 = gt7Telem.getTyreSlipRatio(1);
+  float tireSlip3 = gt7Telem.getTyreSlipRatio(2);
+  float tireSlip4 = gt7Telem.getTyreSlipRatio(3);
+  // Serial.print("tireSlip1: ");
+  // Serial.print(tireSlip1);
+  // Serial.print(" tireSlip2: ");
+  // Serial.print(tireSlip2);
+  // Serial.print(" tireSlip3: ");
+  // Serial.print(tireSlip3);
+  // Serial.print(" tireSlip4: ");
+  // Serial.print(tireSlip4);
+  // Serial.println("%");
+
   // Frequenz basierend auf der Motordrehzahl berechnen
   int frequency = rpm / 60; // f = RPM / 60
 
@@ -110,12 +124,19 @@ void processTelemetryData(Packet packetContent) {
 
 void generateAudioSignalFromRPM(float rpm) {
   // Frequenz auf einen sinnvollen Bereich begrenzen (10 Hz bis 100 Hz)
-  int frequency = constrain(rpm / 60, 10, 100);
+  int frequency = constrain(rpm / 75, 20, 90);
   sineWave.setFrequency(frequency);
+  //Serial.print('setfreq: ');
+  Serial.print(frequency);
+  Serial.println("Hz");
+
 
   // Amplitude basierend auf der RPM berechnen
   float amplitude = constrain(rpm * AMPLITUDE_FACTOR, 0.0, 1.0);
-  sineWave.setAmplitude(amplitude);
+  // sineWave.setAmplitude(amplitude);
+  // Serial.print('set amplitude:');
+  // Serial.print(amplitude);
+  // Serial.println(' ');
 }
 
 void generateGearChangeVibration() {
