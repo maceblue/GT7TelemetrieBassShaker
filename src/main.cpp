@@ -29,6 +29,10 @@ float TIRE_SLIP_FACTOR = 70.0;   // Faktor zur Anpassung der Frequenz basierend 
 bool useTireSlip = true;  // Vibration basierend auf Reifenschlupf aktivieren
 bool useRPM = true;        // Vibration basierend auf RPM aktivieren
 
+// Intensität der Vibrationen in Prozent
+int tireSlipIntensity = 50; // Intensität der Reifenschlupf-Vibration
+int rpmIntensity = 50;      // Intensität der RPM-Vibration
+
 // Globale Variablen
 GT7_UDP_Parser gt7Telem;
 Packet packetContent;
@@ -139,8 +143,8 @@ void processTelemetryData(Packet packetContent) {
         lastChangeTime = millis(); // Änderung erkannt, Timer zurücksetzen
       }
       if (useRPM) {
-        // Durchschnitt der beiden Frequenzen berechnen
-        frequency = (frequency + tireSlipFrequency) / 2;
+        // Gewichteter Durchschnitt der beiden Frequenzen berechnen
+        frequency = (frequency * rpmIntensity + tireSlipFrequency * tireSlipIntensity) / (rpmIntensity + tireSlipIntensity);
       } else {
         frequency = tireSlipFrequency;
       }
@@ -195,7 +199,7 @@ void handleRoot() {
 <head>
   <title>Vibrationseinstellungen</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: black; color: white; }
     label { display: block; margin-top: 10px; }
     input { width: 100%; padding: 5px; margin-top: 5px; }
     button { margin-top: 20px; padding: 10px 20px; }
@@ -254,8 +258,33 @@ void handleRoot() {
   html += R"=====(>Nein</option>
     </select>
 
+    <label for="tire_slip_intensity">Reifenschlupf-Intensität (%):</label>
+    <input type="range" id="tire_slip_intensity" name="tire_slip_intensity" min="0" max="100" value=")=====";
+  html += tireSlipIntensity;
+  html += R"=====(">
+    <span id="tire_slip_intensity_value">)=====";
+  html += tireSlipIntensity;
+  html += R"=====(</span>%
+
+    <label for="rpm_intensity">RPM-Intensität (%):</label>
+    <input type="range" id="rpm_intensity" name="rpm_intensity" min="0" max="100" value=")=====";
+  html += rpmIntensity;
+  html += R"=====(">
+    <span id="rpm_intensity_value">)=====";
+  html += rpmIntensity;
+  html += R"=====(</span>%
+
     <button type="submit">Aktualisieren</button>
   </form>
+
+  <script>
+    document.getElementById('tire_slip_intensity').addEventListener('input', function() {
+      document.getElementById('tire_slip_intensity_value').textContent = this.value;
+    });
+    document.getElementById('rpm_intensity').addEventListener('input', function() {
+      document.getElementById('rpm_intensity_value').textContent = this.value;
+    });
+  </script>
 </body>
 </html>
 )=====";
@@ -272,6 +301,8 @@ void handleUpdate() {
   if (server.hasArg("tire_slip_factor")) TIRE_SLIP_FACTOR = server.arg("tire_slip_factor").toFloat();
   if (server.hasArg("use_tire_slip")) useTireSlip = server.arg("use_tire_slip").toInt() == 1;
   if (server.hasArg("use_rpm")) useRPM = server.arg("use_rpm").toInt() == 1;
+  if (server.hasArg("tire_slip_intensity")) tireSlipIntensity = server.arg("tire_slip_intensity").toInt();
+  if (server.hasArg("rpm_intensity")) rpmIntensity = server.arg("rpm_intensity").toInt();
 
   server.sendHeader("Location", "/");
   server.send(303);
