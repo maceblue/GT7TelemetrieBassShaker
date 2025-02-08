@@ -4,34 +4,13 @@
 #include "GT7UDPParser.h"
 #include "AudioTools.h"
 #include "AudioTools/AudioLibs/AudioBoardStream.h"
+#include "config.h"
 
 // WiFi-Konfiguration
-const char* ssid = "Villa Kunterbunt";
-const char* password = "bc25fcb38b";
 const IPAddress ip(192, 168, 178, 99);
 
 // Webserver
 WebServer server(80);
-
-// Vibrationseinstellungen (Standardwerte)
-int BASE_FREQUENCY = 20;         // Basis-Frequenz in Hz
-int FREQUENCY_PER_INTENSITY = 1; // Hz pro Intensitätspunkt
-int GEAR_SHIFT_FREQUENCY = 30;   // Frequenz für Gangwechsel
-int NORMAL_FREQUENCY = 20;       // Normale Frequenz nach Gangwechsel
-int GEAR_SHIFT_DURATION = 100;   // Dauer in ms
-int RPM_MAX = 8000;              // Maximale Drehzahl
-int RPM_MIN = 0;                 // Minimale Drehzahl
-float AMPLITUDE_FACTOR = 0.01;   // Faktor zur Anpassung der Amplitude
-int FREQUENZ_DIVISOR = 75;       // Divisor für die Frequenzberechnung
-float TIRE_SLIP_FACTOR = 70.0;   // Faktor zur Anpassung der Frequenz basierend auf Reifenschlupf
-
-// Variablen zur Steuerung der Vibrationsmethoden
-bool useTireSlip = true;  // Vibration basierend auf Reifenschlupf aktivieren
-bool useRPM = true;        // Vibration basierend auf RPM aktivieren
-
-// Intensität der Vibrationen in Prozent
-int tireSlipIntensity = 50; // Intensität der Reifenschlupf-Vibration
-int rpmIntensity = 50;      // Intensität der RPM-Vibration
 
 // Globale Variablen
 GT7_UDP_Parser gt7Telem;
@@ -48,12 +27,6 @@ SineWaveGenerator<int16_t> sineWave(32000);
 GeneratedSoundStream<int16_t> sound(sineWave);
 AudioBoardStream out(AudioKitEs8388V1);
 StreamCopy copier(out, sound);
-
-// Variablen zur Überwachung von Änderungen
-unsigned long lastChangeTime = 0;
-float lastRPM = 0;
-float lastTireSlip = 0;
-const unsigned long STOP_VIBRATION_DELAY = 5000; // 5 Sekunden
 
 // Funktionsdeklarationen
 void processTelemetryData(Packet packetContent);
@@ -84,7 +57,7 @@ void setup() {
   auto config = out.defaultConfig(TX_MODE);
   config.copyFrom(info);
   out.begin(config);
-  sineWave.begin(info, N_B4);
+  sineWave.begin(info, 0.0f);
 
   // GT7 Telemetrie initialisieren
   gt7Telem.begin(ip);
