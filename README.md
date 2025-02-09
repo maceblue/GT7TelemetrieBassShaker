@@ -6,6 +6,12 @@ Dieses Projekt soll als Ergänzung am SimRig eine möglichst realistische Vibrat
 
 Das Arduino-Board ESP32-Audio-Kit soll als Alternative zu einem Windows-PC mit der SimHub Software dienen.
 
+## Teileliste
+
+[ESP32-Audio-Kit](https://de.aliexpress.com/item/1005008164303012.html)
+[Verstärker](https://amzn.eu/d/51CTrvL)
+[BassShaker](https://amzn.eu/d/iwGeHdg)
+
 ## Sonstiges
 
 Ich suche Entwickler, die mich in diesem Projekt unterstützen wollen.
