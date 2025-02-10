@@ -87,6 +87,21 @@ void processTelemetryData(Packet packetContent) {
   // Gesamtschlupf basierend auf der Abweichung von 1 berechnen
   float totalTireSlip = abs(tireSlip1 - 1) + abs(tireSlip2 - 1) + abs(tireSlip3 - 1) + abs(tireSlip4 - 1);
 
+  // Federwege
+  float suspHeight1 = packetContent.packetContent.suspHeight[0];
+  float suspHeight2 = packetContent.packetContent.suspHeight[1];
+  float suspHeight3 = packetContent.packetContent.suspHeight[2];
+  float suspHeight4 = packetContent.packetContent.suspHeight[3];
+  Serial.print("suspHeight1: ");
+  Serial.print(suspHeight1);
+  Serial.print(" suspHeight2: ");
+  Serial.print(suspHeight2);
+  Serial.print(" suspHeight3: ");
+  Serial.print(suspHeight3);
+  Serial.print(" suspHeight4: ");
+  Serial.print(suspHeight4);
+  Serial.println("%");
+
   // Gangwechsel überprüfen
   uint8_t currentGear = packetContent.packetContent.gears & 0b00001111;
   if (currentGear != previousGear) {
