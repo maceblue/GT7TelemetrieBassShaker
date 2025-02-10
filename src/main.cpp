@@ -6,9 +6,6 @@
 #include "AudioTools/AudioLibs/AudioBoardStream.h"
 #include "config.h"
 
-// WiFi-Konfiguration
-const IPAddress ip(192, 168, 178, 99);
-
 // Webserver
 WebServer server(80);
 
@@ -60,7 +57,7 @@ void setup() {
   sineWave.begin(info, 0.0f);
 
   // GT7 Telemetrie initialisieren
-  gt7Telem.begin(ip);
+  gt7Telem.begin(playstationIP);
   gt7Telem.sendHeartbeat();
 }
 

@@ -5,6 +5,14 @@
 extern char* ssid;
 extern char* password;
 
+// IP-Adresse als separate Bytes
+extern const byte ip_part1;
+extern const byte ip_part2;
+extern const byte ip_part3;
+extern const byte ip_part4;
+
+extern const IPAddress playstationIP;
+
 // Vibrationseinstellungen (Standardwerte)
 extern int BASE_FREQUENCY;
 extern int FREQUENCY_PER_INTENSITY;

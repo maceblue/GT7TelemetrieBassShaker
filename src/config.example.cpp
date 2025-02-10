@@ -1,8 +1,18 @@
+#include <Arduino.h>
 #include "config.h"
 
 // WiFi-Konfiguration
 char* ssid = "xxxxxxxx";
 char* password = "xxxxxxxx";
+
+// IP-Adresse als separate Bytes
+const byte ip_part1 = 192;
+const byte ip_part2 = 168;
+const byte ip_part3 = 178;
+const byte ip_part4 = 99;
+
+// IP-Adresse aus den Bytes erstellen
+const IPAddress playstationIP(ip_part1, ip_part2, ip_part3, ip_part4);
 
 // Vibrationseinstellungen (Standardwerte)
 int BASE_FREQUENCY = 20;
