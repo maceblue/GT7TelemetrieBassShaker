@@ -25,6 +25,7 @@ int RPM_MIN = 0;
 float AMPLITUDE_FACTOR = 0.01;
 int FREQUENCY_DIVISOR = 75;
 float TIRE_SLIP_FACTOR = 70.0;
+float SUSPENSION_HEIGHT_FACTOR = 70.0;
 
 // Variablen zur Steuerung der Vibrationsmethoden
 bool useTireSlip = true;

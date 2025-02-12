@@ -170,7 +170,7 @@ int generateTireSlipVibration(float tireSlip) {
 
 int generateSuspHeightVibration(float suspHeight) {
   // Frequenz basierend auf den Federwegen berechnen
-  int frequency = constrain(20 + suspHeight * TIRE_SLIP_FACTOR, 20, 90);
+  int frequency = constrain(20 + suspHeight * SUSPENSION_HEIGHT_FACTOR, 20, 90);
   Serial.print("Susp Height Frequency: ");
   Serial.println(frequency);
   return frequency;
@@ -238,6 +238,11 @@ void handleRoot() {
     <label for="tire_slip_factor">Reifenschlupf-Faktor:</label>
     <input type="number" step="0.01" id="tire_slip_factor" name="tire_slip_factor" value=")=====";
   html += TIRE_SLIP_FACTOR;
+  html += R"=====(">
+
+    <label for="suspension_height_factor">Federwege-Faktor:</label>
+    <input type="number" step="0.01" id="suspension_height_factor" name="suspension_height_factor" value=")=====";
+  html += SUSPENSION_HEIGHT_FACTOR;
   html += R"=====(">
 
     <label for="use_tire_slip">Reifenschlupf verwenden:</label>
@@ -322,6 +327,7 @@ void handleUpdate() {
   if (server.hasArg("normal_freq")) NORMAL_FREQUENCY = server.arg("normal_freq").toInt();
   if (server.hasArg("gear_shift_dur")) GEAR_SHIFT_DURATION = server.arg("gear_shift_dur").toInt();
   if (server.hasArg("tire_slip_factor")) TIRE_SLIP_FACTOR = server.arg("tire_slip_factor").toFloat();
+  if (server.hasArg("suspension_height_factor")) SUSPENSION_HEIGHT_FACTOR = server.arg("suspension_height_factor").toFloat();
   if (server.hasArg("use_tire_slip")) useTireSlip = server.arg("use_tire_slip").toInt() == 1;
   if (server.hasArg("use_rpm")) useRPM = server.arg("use_rpm").toInt() == 1;
   if (server.hasArg("use_susp_height")) useSuspHeight = server.arg("use_susp_height").toInt() == 1;

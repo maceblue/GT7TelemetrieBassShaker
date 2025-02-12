@@ -1,4 +1,3 @@
-#ifndef CONFIG_H
 #define CONFIG_H
 
 // WiFi-Konfiguration
@@ -24,6 +23,7 @@ extern int RPM_MIN;
 extern float AMPLITUDE_FACTOR;
 extern int FREQUENCY_DIVISOR;
 extern float TIRE_SLIP_FACTOR;
+extern float SUSPENSION_HEIGHT_FACTOR;
 
 // Variablen zur Steuerung der Vibrationsmethoden
 extern bool useTireSlip;
@@ -41,5 +41,3 @@ extern float lastRPM;
 extern float lastTireSlip;
 extern float lastSuspHeight;
 extern const unsigned long STOP_VIBRATION_DELAY;
-
-#endif // CONFIG_H
