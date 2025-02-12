@@ -2,8 +2,8 @@
 #define CONFIG_H
 
 // WiFi-Konfiguration
-extern char* ssid;
-extern char* password;
+extern const char* ssid;
+extern const char* password;
 
 // IP-Adresse als separate Bytes
 extern const byte ip_part1;
@@ -22,21 +22,24 @@ extern int GEAR_SHIFT_DURATION;
 extern int RPM_MAX;
 extern int RPM_MIN;
 extern float AMPLITUDE_FACTOR;
-extern int FREQUENZ_DIVISOR;
+extern int FREQUENCY_DIVISOR;
 extern float TIRE_SLIP_FACTOR;
 
 // Variablen zur Steuerung der Vibrationsmethoden
 extern bool useTireSlip;
 extern bool useRPM;
+extern bool useSuspHeight;
 
 // Intensität der Vibrationen in Prozent
 extern int tireSlipIntensity;
 extern int rpmIntensity;
+extern int suspHeightIntensity;
 
 // Variablen zur Überwachung von Änderungen
 extern unsigned long lastChangeTime;
 extern float lastRPM;
 extern float lastTireSlip;
-extern unsigned long STOP_VIBRATION_DELAY;
+extern float lastSuspHeight;
+extern const unsigned long STOP_VIBRATION_DELAY;
 
 #endif // CONFIG_H

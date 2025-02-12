@@ -29,6 +29,7 @@ StreamCopy copier(out, sound);
 void processTelemetryData(Packet packetContent);
 int generateAudioSignalFromRPM(float rpm);
 int generateTireSlipVibration(float tireSlip);
+int generateSuspHeightVibration(float suspHeight);
 void generateGearChangeVibration();
 void printTelemetry(float speed, float rpm, int intensity);
 void handleRoot();
@@ -54,7 +55,8 @@ void setup() {
   auto config = out.defaultConfig(TX_MODE);
   config.copyFrom(info);
   out.begin(config);
-  sineWave.begin(info, 0.0f);
+  sineWave.begin(info, N_C0);
+  sineWave.setFrequency(0);
 
   // GT7 Telemetrie initialisieren
   gt7Telem.begin(playstationIP);
@@ -92,17 +94,7 @@ void processTelemetryData(Packet packetContent) {
   float suspHeight2 = packetContent.packetContent.suspHeight[1];
   float suspHeight3 = packetContent.packetContent.suspHeight[2];
   float suspHeight4 = packetContent.packetContent.suspHeight[3];
-  Serial.print("suspHeight1: ");
-  Serial.print(suspHeight1);
-  Serial.print(" suspHeight2: ");
-  Serial.print(suspHeight2);
-  Serial.print(" suspHeight3: ");
-  Serial.print(suspHeight3);
-  Serial.print(" suspHeight4: ");
-  Serial.println(suspHeight4);
-  /* Im Test Werte um 0.2 erhalten
-  TODO: max / min Werte testen. Ist das abhängig vom Auto (und dessen Einstellungen)?
-  */
+  float totalSuspHeight = abs(suspHeight1) + abs(suspHeight2) + abs(suspHeight3) + abs(suspHeight4);
 
   // Gangwechsel überprüfen
   uint8_t currentGear = packetContent.packetContent.gears & 0b00001111;
@@ -137,6 +129,20 @@ void processTelemetryData(Packet packetContent) {
       }
     }
 
+    if (useSuspHeight) {
+      int suspHeightFrequency = generateSuspHeightVibration(totalSuspHeight);
+      if (totalSuspHeight != lastSuspHeight) {
+        lastSuspHeight = totalSuspHeight;
+        lastChangeTime = millis(); // Änderung erkannt, Timer zurücksetzen
+      }
+      if (useRPM || useTireSlip) {
+        // Gewichteter Durchschnitt der Frequenzen berechnen
+        frequency = (frequency * (rpmIntensity + tireSlipIntensity) + suspHeightFrequency * suspHeightIntensity) / (rpmIntensity + tireSlipIntensity + suspHeightIntensity);
+      } else {
+        frequency = suspHeightFrequency;
+      }
+    }
+
     // Vibration stoppen, wenn sich die Werte nicht ändern
     if (millis() - lastChangeTime > STOP_VIBRATION_DELAY) {
       sineWave.setFrequency(0); // Vibration stoppen
@@ -148,7 +154,7 @@ void processTelemetryData(Packet packetContent) {
 
 int generateAudioSignalFromRPM(float rpm) {
   // Frequenz auf einen sinnvollen Bereich begrenzen (10 Hz bis 100 Hz)
-  int frequency = constrain(rpm / FREQUENZ_DIVISOR, 20, 90);
+  int frequency = constrain(rpm / FREQUENCY_DIVISOR, 20, 90);
   Serial.print("RPM Frequency: ");
   Serial.println(frequency);
   return frequency;
@@ -158,6 +164,14 @@ int generateTireSlipVibration(float tireSlip) {
   // Frequenz basierend auf dem Reifenschlupf berechnen
   int frequency = constrain(20 + tireSlip * TIRE_SLIP_FACTOR, 20, 90);
   Serial.print("Tire Slip Frequency: ");
+  Serial.println(frequency);
+  return frequency;
+}
+
+int generateSuspHeightVibration(float suspHeight) {
+  // Frequenz basierend auf den Federwegen berechnen
+  int frequency = constrain(20 + suspHeight * TIRE_SLIP_FACTOR, 20, 90);
+  Serial.print("Susp Height Frequency: ");
   Serial.println(frequency);
   return frequency;
 }
@@ -246,6 +260,16 @@ void handleRoot() {
   html += R"=====(>Nein</option>
     </select>
 
+    <label for="use_susp_height">Federwege verwenden:</label>
+    <select id="use_susp_height" name="use_susp_height">
+      <option value="1" )=====";
+  html += useSuspHeight ? "selected" : "";
+  html += R"=====(>Ja</option>
+      <option value="0" )=====";
+  html += !useSuspHeight ? "selected" : "";
+  html += R"=====(>Nein</option>
+    </select>
+
     <label for="tire_slip_intensity">Reifenschlupf-Intensität (%):</label>
     <input type="range" id="tire_slip_intensity" name="tire_slip_intensity" min="0" max="100" value=")=====";
   html += tireSlipIntensity;
@@ -262,6 +286,14 @@ void handleRoot() {
   html += rpmIntensity;
   html += R"=====(</span>%
 
+    <label for="susp_height_intensity">Federwege-Intensität (%):</label>
+    <input type="range" id="susp_height_intensity" name="susp_height_intensity" min="0" max="100" value=")=====";
+  html += suspHeightIntensity;
+  html += R"=====(">
+    <span id="susp_height_intensity_value">)=====";
+  html += suspHeightIntensity;
+  html += R"=====(</span>%
+
     <button type="submit">Aktualisieren</button>
   </form>
 
@@ -271,6 +303,9 @@ void handleRoot() {
     });
     document.getElementById('rpm_intensity').addEventListener('input', function() {
       document.getElementById('rpm_intensity_value').textContent = this.value;
+    });
+    document.getElementById('susp_height_intensity').addEventListener('input', function() {
+      document.getElementById('susp_height_intensity_value').textContent = this.value;
     });
   </script>
 </body>
@@ -289,8 +324,10 @@ void handleUpdate() {
   if (server.hasArg("tire_slip_factor")) TIRE_SLIP_FACTOR = server.arg("tire_slip_factor").toFloat();
   if (server.hasArg("use_tire_slip")) useTireSlip = server.arg("use_tire_slip").toInt() == 1;
   if (server.hasArg("use_rpm")) useRPM = server.arg("use_rpm").toInt() == 1;
+  if (server.hasArg("use_susp_height")) useSuspHeight = server.arg("use_susp_height").toInt() == 1;
   if (server.hasArg("tire_slip_intensity")) tireSlipIntensity = server.arg("tire_slip_intensity").toInt();
   if (server.hasArg("rpm_intensity")) rpmIntensity = server.arg("rpm_intensity").toInt();
+  if (server.hasArg("susp_height_intensity")) suspHeightIntensity = server.arg("susp_height_intensity").toInt();
 
   server.sendHeader("Location", "/");
   server.send(303);
