@@ -99,8 +99,10 @@ void processTelemetryData(Packet packetContent) {
   Serial.print(" suspHeight3: ");
   Serial.print(suspHeight3);
   Serial.print(" suspHeight4: ");
-  Serial.print(suspHeight4);
-  Serial.println("%");
+  Serial.println(suspHeight4);
+  /* Im Test Werte um 0.2 erhalten
+  TODO: max / min Werte testen. Ist das abhängig vom Auto (und dessen Einstellungen)?
+  */
 
   // Gangwechsel überprüfen
   uint8_t currentGear = packetContent.packetContent.gears & 0b00001111;
