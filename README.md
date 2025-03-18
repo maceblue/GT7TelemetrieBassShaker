@@ -16,7 +16,7 @@ Das Arduino-Board ESP32-Audio-Kit soll als Alternative zu einem Windows-PC mit d
 ## Einstellungen
 
 Das Projekt beinhaltet einen Webserver, der automatisch gestartet wird. Über diesen ist eine kleine Website erreichbar, auf der Einstellungen zu den Vibrationsparametern vorgenommen werden können.
-
+Die Website erreicht man über die IP des ESP.
 
 ## Sonstiges
 
