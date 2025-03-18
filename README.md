@@ -13,6 +13,11 @@ Das Arduino-Board ESP32-Audio-Kit soll als Alternative zu einem Windows-PC mit d
 [BassShaker](https://amzn.eu/d/iwGeHdg)
 [Gehäuse](https://www.printables.com/model/814645-esp32-audio-kit-v22-housing/files)
 
+## Einstellungen
+
+Das Projekt beinhaltet einen Webserver, der automatisch gestartet wird. Über diesen ist eine kleine Website erreichbar, auf der Einstellungen zu den Vibrationsparametern vorgenommen werden können.
+
+
 ## Sonstiges
 
 Vor dem Kompilieren sollte die config.example.cpp in config.cpp umbenannt und die Konfiguration für WLAN darin entsprechend angepasst werden.
